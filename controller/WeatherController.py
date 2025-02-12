@@ -1,22 +1,37 @@
 from flask import Flask, jsonify
 import requests
+import os
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 
-# This is a simple function to simulate fetching weather data.
+# Load environment variables from .env file
+load_dotenv()
+
+# Fetch the API key from the environment variable
+API_KEY = os.getenv('VISUAL_CROSSING_API_KEY')
+
 def get_weather(city):
-    # Simulate a weather service (you can replace this with actual API calls)
     try:
-        # Simulating a fetch error (e.g., city not found)
-        if city not in ['New York', 'London', 'Tokyo']:  # Replace this check with real API calls
-            raise ValueError(f"City {city} not found.")
+        # Define the base URL for the Visual Crossing API
+        base_url = f"https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/{city}?key={API_KEY}"
         
-        # Example data - in real implementation, data would come from an external API
-        return {
-            "city": city,
-            "temperature": 22,  # Example temperature
-            "daylight_hours": 10  # Example daylight hours
-        }
+        # Make the API call
+        response = requests.get(base_url)
+
+        if response.status_code == 200:
+            weather_data = response.json()
+            
+            # Assuming the API returns a 'currentConditions' field with the required data
+            weather_info = {
+                "city": city,
+                "temperature": weather_data["currentConditions"]["temp"],
+                "daylight_hours": weather_data["currentConditions"]["daylight"]
+            }
+            return weather_info
+        else:
+            raise ValueError(f"Error fetching data for {city}: {response.status_code}")
+    
     except Exception as e:
         raise ValueError(f"Error fetching data for {city}: {str(e)}")
 
